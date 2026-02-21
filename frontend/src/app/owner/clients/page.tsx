@@ -141,8 +141,7 @@ export default function OwnerClientsPage() {
                 <input type="text" placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="input-field" required />
                 <input type="email" placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="input-field" required />
                 {!editing && <input type="password" placeholder="Password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="input-field" required />}
-                <input type="text" placeholder="Store Name" value={form.storeName} onChange={e => setForm({ ...form, storeName: e.target.value })} className="input-field" required />
-                <input type="text" placeholder="Store URL (slug)" value={form.storeUrl} onChange={e => setForm({ ...form, storeUrl: e.target.value })} className="input-field" required />
+                <input type="text" placeholder="Store Name" value={form.storeName} onChange={e => setForm({ ...form, storeName: e.target.value, storeUrl: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '') })} className="input-field" required />
                 <input type="tel" placeholder="Phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="input-field" />
                 <select value={form.plan} onChange={e => setForm({ ...form, plan: e.target.value })} className="input-field">
                   <option value="basic">Basic</option>

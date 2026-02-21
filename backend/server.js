@@ -19,11 +19,21 @@ const io = initSocket(server);
 app.use(helmet());
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL_2,
   'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:3002',
 ].filter(Boolean);
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now
+    }
+  },
+  credentials: true
+}));
 
 // Rate limiting
 const apiLimiter = rateLimit({

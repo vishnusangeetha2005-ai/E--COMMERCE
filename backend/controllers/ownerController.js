@@ -59,12 +59,17 @@ const getClients = async (req, res) => {
 // POST /api/owner/clients
 const addClient = async (req, res) => {
   try {
-    const { name, email, password, storeName, storeUrl, phone, whatsappNo, instagramId, facebookPage, plan } = req.body;
+    const { name, email, password, storeName, phone, whatsappNo, instagramId, facebookPage, plan } = req.body;
     const exists = await Client.findOne({ email });
     if (exists) return res.status(400).json({ success: false, message: 'Client email already exists' });
 
-    const urlExists = await Client.findOne({ storeUrl: storeUrl.toLowerCase() });
-    if (urlExists) return res.status(400).json({ success: false, message: 'Store URL already taken' });
+    // Auto-generate unique store URL from store name
+    let baseUrl = (req.body.storeUrl || storeName).toLowerCase().replace(/[^a-z0-9]/g, '');
+    let storeUrl = baseUrl;
+    let counter = 1;
+    while (await Client.findOne({ storeUrl })) {
+      storeUrl = `${baseUrl}${counter++}`;
+    }
 
     const hashed = await bcrypt.hash(password, 10);
     const client = await Client.create({

@@ -16,12 +16,13 @@ interface ProductCardProps {
   };
   onAddToCart?: (id: string) => void;
   onToggleWishlist?: (id: string) => void;
+  basePath?: string;
 }
 
-export default function ProductCard({ product, onAddToCart, onToggleWishlist }: ProductCardProps) {
+export default function ProductCard({ product, onAddToCart, onToggleWishlist, basePath = '/products' }: ProductCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition-shadow">
-      <Link href={`/products/${product._id}`}>
+      <Link href={`${basePath}/${product._id}`}>
         <div className="relative aspect-square bg-gray-100">
           {product.images?.[0] ? (
             <Image src={product.images[0]} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform" />
@@ -37,7 +38,7 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist }: 
       </Link>
       <div className="p-4">
         <p className="text-xs text-primary-600 font-medium mb-1">{product.category}</p>
-        <Link href={`/products/${product._id}`}>
+        <Link href={`${basePath}/${product._id}`}>
           <h3 className="font-semibold text-gray-900 truncate hover:text-primary-600">{product.name}</h3>
         </Link>
         <div className="flex items-center gap-1 mt-1">

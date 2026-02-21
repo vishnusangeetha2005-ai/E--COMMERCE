@@ -1,9 +1,11 @@
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const Owner = require('../models/Owner');
 const Client = require('../models/Client');
 const Customer = require('../models/Customer');
 const generateToken = require('../utils/generateToken');
 const { sendError } = require('../utils/errorResponse');
+const { sendPasswordResetEmail } = require('../utils/emailService');
 
 // Owner Register
 const registerOwner = async (req, res) => {
@@ -150,6 +152,119 @@ const loginCustomerForStore = async (req, res) => {
   }
 };
 
+// Forgot Password - Owner
+const forgotPasswordOwner = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const owner = await Owner.findOne({ email });
+    if (owner) {
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      owner.resetPasswordToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+      owner.resetPasswordExpiry = Date.now() + 60 * 60 * 1000;
+      await owner.save();
+      const resetUrl = `${process.env.FRONTEND_URL}/owner/reset-password?token=${rawToken}`;
+      await sendPasswordResetEmail(owner.email, owner.name, resetUrl, 'owner');
+    }
+    res.json({ success: true, message: 'If that email is registered, a reset link has been sent.' });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+// Reset Password - Owner
+const resetPasswordOwner = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const hashed = crypto.createHash('sha256').update(token).digest('hex');
+    const owner = await Owner.findOne({ resetPasswordToken: hashed, resetPasswordExpiry: { $gt: Date.now() } });
+    if (!owner) return res.status(400).json({ success: false, message: 'Token is invalid or has expired' });
+    owner.password = await bcrypt.hash(password, 10);
+    owner.resetPasswordToken = null;
+    owner.resetPasswordExpiry = null;
+    await owner.save();
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+// Forgot Password - Client
+const forgotPasswordClient = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const client = await Client.findOne({ email });
+    if (client) {
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      client.resetPasswordToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+      client.resetPasswordExpiry = Date.now() + 60 * 60 * 1000;
+      await client.save();
+      const resetUrl = `${process.env.FRONTEND_URL}/admin/reset-password?token=${rawToken}`;
+      await sendPasswordResetEmail(client.email, client.name, resetUrl, 'store admin');
+    }
+    res.json({ success: true, message: 'If that email is registered, a reset link has been sent.' });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+// Reset Password - Client
+const resetPasswordClient = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const hashed = crypto.createHash('sha256').update(token).digest('hex');
+    const client = await Client.findOne({ resetPasswordToken: hashed, resetPasswordExpiry: { $gt: Date.now() } });
+    if (!client) return res.status(400).json({ success: false, message: 'Token is invalid or has expired' });
+    client.password = await bcrypt.hash(password, 10);
+    client.resetPasswordToken = null;
+    client.resetPasswordExpiry = null;
+    await client.save();
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+// Forgot Password - Customer (store-scoped)
+const forgotPasswordCustomer = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const client = await Client.findOne({ storeUrl: req.params.storeUrl, isActive: true });
+    if (client) {
+      const customer = await Customer.findOne({ email, clientId: client._id });
+      if (customer) {
+        const rawToken = crypto.randomBytes(32).toString('hex');
+        customer.resetPasswordToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+        customer.resetPasswordExpiry = Date.now() + 60 * 60 * 1000;
+        await customer.save();
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}&store=${req.params.storeUrl}`;
+        await sendPasswordResetEmail(customer.email, customer.name, resetUrl, 'customer');
+      }
+    }
+    res.json({ success: true, message: 'If that email is registered, a reset link has been sent.' });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+// Reset Password - Customer (store-scoped)
+const resetPasswordCustomer = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const client = await Client.findOne({ storeUrl: req.params.storeUrl, isActive: true });
+    if (!client) return res.status(404).json({ success: false, message: 'Store not found' });
+    const hashed = crypto.createHash('sha256').update(token).digest('hex');
+    const customer = await Customer.findOne({ clientId: client._id, resetPasswordToken: hashed, resetPasswordExpiry: { $gt: Date.now() } });
+    if (!customer) return res.status(400).json({ success: false, message: 'Token is invalid or has expired' });
+    customer.password = await bcrypt.hash(password, 10);
+    customer.resetPasswordToken = null;
+    customer.resetPasswordExpiry = null;
+    await customer.save();
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
 // Get current user profile
 const getProfile = async (req, res) => {
   res.json({ success: true, data: req.user });
@@ -159,5 +274,8 @@ module.exports = {
   registerOwner, loginOwner, loginClient,
   registerCustomer, loginCustomer,
   registerCustomerForStore, loginCustomerForStore,
+  forgotPasswordOwner, resetPasswordOwner,
+  forgotPasswordClient, resetPasswordClient,
+  forgotPasswordCustomer, resetPasswordCustomer,
   getProfile,
 };

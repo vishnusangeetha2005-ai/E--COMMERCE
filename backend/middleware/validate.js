@@ -39,4 +39,15 @@ const customerLoginRules = [
   handleValidation,
 ];
 
-module.exports = { registerOwnerRules, loginRules, registerCustomerRules, customerLoginRules };
+const forgotPasswordRules = [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  handleValidation,
+];
+
+const resetPasswordRules = [
+  body('token').notEmpty().withMessage('Token is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  handleValidation,
+];
+
+module.exports = { registerOwnerRules, loginRules, registerCustomerRules, customerLoginRules, forgotPasswordRules, resetPasswordRules };

@@ -24,6 +24,8 @@ const customerSchema = new mongoose.Schema({
     color: { type: String, default: '' },
   }],
   role: { type: String, default: 'customer' },
+  resetPasswordToken: { type: String, default: null },
+  resetPasswordExpiry: { type: Date, default: null },
 }, { timestamps: true });
 
 customerSchema.index({ email: 1, clientId: 1 }, { unique: true });

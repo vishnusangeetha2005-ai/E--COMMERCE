@@ -22,6 +22,8 @@ const clientSchema = new mongoose.Schema({
   subscriptionId: { type: String, default: '' },
   ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Owner', required: true },
   role: { type: String, default: 'client' },
+  resetPasswordToken: { type: String, default: null },
+  resetPasswordExpiry: { type: Date, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Client', clientSchema);

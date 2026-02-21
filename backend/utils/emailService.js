@@ -49,4 +49,19 @@ const sendClientCredentials = async (email, name, password) => {
   });
 };
 
-module.exports = { sendEmail, sendWelcomeEmail, sendOrderReceiptEmail, sendClientCredentials };
+const sendPasswordResetEmail = async (email, name, resetUrl, role) => {
+  await sendEmail({
+    to: email,
+    subject: 'Password Reset Request',
+    html: `
+      <h2>Hello ${escapeHtml(name)},</h2>
+      <p>You requested a password reset for your ${escapeHtml(role)} account.</p>
+      <p>Click the link below to reset your password. This link expires in 1 hour.</p>
+      <a href="${resetUrl}" style="background:#4f46e5;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;margin:16px 0;">Reset Password</a>
+      <p>If you did not request this, you can safely ignore this email.</p>
+      <p style="color:#999;font-size:12px;">Link: ${resetUrl}</p>
+    `,
+  });
+};
+
+module.exports = { sendEmail, sendWelcomeEmail, sendOrderReceiptEmail, sendClientCredentials, sendPasswordResetEmail };

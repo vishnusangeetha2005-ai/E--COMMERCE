@@ -17,6 +17,8 @@ const ownerSchema = new mongoose.Schema({
   facebookPage: { type: String, default: '' },
   facebookToken: { type: String, default: '' },
   role: { type: String, default: 'owner' },
+  resetPasswordToken: { type: String, default: null },
+  resetPasswordExpiry: { type: Date, default: null },
   botTemplates: {
     welcome: { type: String, default: 'Welcome! How can we help you today?' },
     orderConfirmation: { type: String, default: 'Your order #{orderId} has been placed successfully!' },

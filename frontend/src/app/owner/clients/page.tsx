@@ -9,7 +9,7 @@ export default function OwnerClientsPage() {
   const [clients, setClients] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ name: '', email: '', password: '', storeName: '', storeUrl: '', phone: '', plan: 'basic' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', storeName: '', storeUrl: '', phone: '', plan: 'basic' }); // v2
   const [subModal, setSubModal] = useState<any>(null);
   const [subForm, setSubForm] = useState({ plan: 'basic', days: '30' });
 

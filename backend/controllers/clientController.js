@@ -141,11 +141,39 @@ const updateOrder = async (req, res) => {
     const io = req.app.get('io');
     if (io) io.emit('orderStatusUpdate', { orderId: order._id, status: order.orderStatus, customerId: order.customerId });
 
-    // Send shipping/status email to customer (non-blocking)
-    if (req.body.orderStatus === 'shipped' || req.body.orderStatus === 'delivered') {
+    // Send WhatsApp + email notifications (non-blocking)
+    if (req.body.orderStatus) {
       try {
-        const customer = await Customer.findById(order.customerId).select('email name');
-        if (customer) {
+        const customer = await Customer.findById(order.customerId).select('email name phone');
+        const client = await Client.findById(order.clientId).select('whatsappToken whatsappPhoneNumberId storeName');
+
+        const statusMessages = {
+          confirmed: `✅ Hello ${customer?.name}! Your order #${String(order._id).slice(-8)} from ${client?.storeName || 'our store'} has been *confirmed*. Total: ₹${order.totalAmount}`,
+          shipped: `🚚 Hello ${customer?.name}! Your order #${String(order._id).slice(-8)} has been *shipped*. ${order.trackingId ? `Tracking ID: ${order.trackingId}` : ''} Total: ₹${order.totalAmount}`,
+          delivered: `🎉 Hello ${customer?.name}! Your order #${String(order._id).slice(-8)} has been *delivered*. Thank you for shopping with ${client?.storeName || 'us'}!`,
+          cancelled: `❌ Hello ${customer?.name}! Your order #${String(order._id).slice(-8)} has been *cancelled*. Total: ₹${order.totalAmount}`,
+        };
+
+        const message = statusMessages[req.body.orderStatus];
+
+        // Send WhatsApp notification
+        if (message && customer?.phone && client?.whatsappToken && client?.whatsappPhoneNumberId) {
+          const phone = customer.phone.replace(/\D/g, '');
+          const fetch = require('node-fetch');
+          fetch(`https://graph.facebook.com/v18.0/${client.whatsappPhoneNumberId}/messages`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${client.whatsappToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: phone,
+              type: 'text',
+              text: { body: message },
+            }),
+          }).catch(() => {});
+        }
+
+        // Send email for shipped/delivered
+        if (customer && (req.body.orderStatus === 'shipped' || req.body.orderStatus === 'delivered')) {
           const statusLabel = req.body.orderStatus === 'shipped' ? 'Shipped' : 'Delivered';
           const trackingLine = order.trackingId ? `<p>Tracking ID: <strong>${order.trackingId}</strong></p>` : '';
           await sendEmail({
@@ -154,7 +182,7 @@ const updateOrder = async (req, res) => {
             html: `<h2>Order ${statusLabel}!</h2><p>Hi ${customer.name}, your order <strong>#${order._id}</strong> has been ${statusLabel.toLowerCase()}.</p>${trackingLine}<p>Total: ₹${order.totalAmount}</p>`,
           });
         }
-      } catch (e) { /* ignore email errors */ }
+      } catch (e) { /* ignore notification errors */ }
     }
 
     res.json({ success: true, data: order });

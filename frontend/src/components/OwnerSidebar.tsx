@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Logo from './Logo';
 import { FiHome, FiUsers, FiShoppingCart, FiDollarSign, FiMessageSquare, FiCpu, FiSettings, FiLogOut } from 'react-icons/fi';
@@ -17,7 +17,9 @@ const links = [
 
 export default function OwnerSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { logout } = useAuth();
+  const handleLogout = () => { logout(); router.push('/owner/login'); };
 
   return (
     <aside className="w-64 bg-gray-900 text-white min-h-screen flex flex-col">
@@ -37,7 +39,7 @@ export default function OwnerSidebar() {
         })}
       </nav>
       <div className="p-4 border-t border-gray-800">
-        <button onClick={logout} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-gray-800 w-full">
+        <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-gray-800 w-full">
           <FiLogOut className="w-4 h-4" /> Logout
         </button>
       </div>

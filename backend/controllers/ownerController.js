@@ -197,6 +197,8 @@ const updateSettings = async (req, res) => {
   try {
     const updates = {};
     if (req.body.brandName) updates.brandName = req.body.brandName;
+    if (req.body.email) updates.email = req.body.email;
+    if (req.body.password) updates.password = await bcrypt.hash(req.body.password, 10);
     if (req.file) updates.logo = req.file.path;
     if (req.body.razorpayKeyId !== undefined) updates.razorpayKeyId = req.body.razorpayKeyId;
     if (req.body.razorpayKeySecret !== undefined) updates.razorpayKeySecret = req.body.razorpayKeySecret;
